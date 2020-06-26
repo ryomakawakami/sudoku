@@ -3,10 +3,10 @@ import solver.constant as constant
 class Puzzle:
     def __init__(self, grid):
         self.grid = [0 for i in range(81)]
-        self.values = [[1 for i in range(9)] for j in range(81)]    # 1 if possibility of being that number (index + 1)
+        self.values = [constant.digits for j in range(81)]
         for i, n in enumerate(grid):
             if n != 0:
-                self.assign(i, n - 1)
+                self.assign(i, str(n))
 
     def display(self):
         for i, n in enumerate(self.grid):
@@ -19,32 +19,30 @@ class Puzzle:
                 print('| ', end='')
         print()
 
-    # num must be index of number (e.g. num = 0 to represent 1)
     def assign(self, square, num):
         # Loop through and eliminate candidates
-        for i, x in enumerate(self.values[square]):
-            if x == 1 and i != num:
-                self.eliminate(square, i)
+        digitsToElim = self.values[square].replace(num, '')
+        for d in digitsToElim:
+            self.eliminate(square, d)
 
     def eliminate(self, square, num):
         # Eliminate num
-        self.values[square][num] = 0
+        self.values[square] = self.values[square].replace(num, '')
 
         # If square is newly determined, then eliminate from peers
-        for i in range(9):
-            if self.values[square][i] == 1:
-                if sum(self.values[square][i+1:]) == 0:
-                    if self.grid[square] == 0:
-                        self.grid[square] = i + 1
-                        for peerIndex in constant.peers[square]:
-                            self.eliminate(peerIndex, i)
-                else:
-                    break
-
+        if len(self.values[square]) == 1:
+            if self.grid[square] == 0:
+                self.grid[square] = int(self.values[square])
+                for peerIndex in constant.peers[square]:
+                    self.eliminate(peerIndex, self.values[square])
+                    
         # If unit has only one possible space for num, do assignment there
         for unit in constant.units[square]:
-            possible = [sq for sq in unit if self.values[sq][num] == 1]
+            possible = [sq for sq in unit if num in self.values[sq]]
             if len(possible) == 1:
                 if self.grid[possible[0]] == 0:
-                    self.grid[possible[0]] = num
+                    self.grid[possible[0]] = int(num)
                     self.assign(possible[0], num)
+
+    def search(self):
+        pass
